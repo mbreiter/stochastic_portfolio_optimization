@@ -29,7 +29,7 @@ n = size(data,2);
 tickers = data.Properties.VariableNames';
 dates = datetime(data.Properties.RowNames);
 
-% calculate the stocks' weekly returns
+% calculate the stocks' yearly returns
 prices  = table2array(data);
 returns = (prices(2:end,:) - prices(1:end-1,:)) ./ prices(1:end-1,:);
 
@@ -48,8 +48,8 @@ cal_returns = returns(cal_start <= dates & dates <= cal_end,:);
 current_prices = table2array(data((cal_end - days(7)) <= dates & dates <= cal_end,:))';
 
 % calculate the geometric mean of the returns of all assets
-mu = (geomean(cal_returns+1)-1)';
-cov = cov(cal_returns);
+mu = 52*(geomean(cal_returns+1)-1)'
+cov = 52*cov(cal_returns);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 3. scenario generation
@@ -80,7 +80,7 @@ sim_liabilities = zeros(S,1);
 
 % we have yearly estimates for returns and we wish to simulate the
 % price path after six months using monthly time-steps
-dt = 1/12;
+dt = 1/252;
 
 % setting the random seed so that our random draws are consistent across testing
 rng(1);
@@ -102,6 +102,10 @@ for i=1:S
     sim_returns(:,i) = (sim_price(:,i) - current_prices) ./ current_prices;
 end
 
+sim_returns
+sim_liabilities
+mu
+
 X = 1:n;
 Y = 1:S;
 mesh(sim_price);
@@ -119,11 +123,11 @@ zlabel('Asset Price','interpreter','latex','FontSize',12);
 % take uniform probability for each scenario
 p = 1/S;
 
-% we have an initial budget of 15,000
-B = 15000;
+% we have an initial budget of 17,500
+B = 17500;
 
-% the benefit of running a surplus will be a 2 and the cost of running a
-% shortfall will be -10
+% the benefit of running a surplus will be a 1 and the cost of running a
+% shortfall will be -2
 surplus = -1;
 shortfall = 2;
 
@@ -146,7 +150,7 @@ beq = sim_liabilities;
 lb = zeros(n+2*S,1);
 ub = [];
 
-[stochastic, sto_value] = linprog(f, A, b, Aeq, beq, lb, ub);
+[stochastic, sto_value] = linprog(f, A, b, Aeq, beq, lb, ub)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 5. value of the stochastic solution
 %   - based on the expected values of the returns and the liability
@@ -163,12 +167,12 @@ A = [ones(1,n) 0 0];
 b = B;
 
 Aeq = [(mu+1)' -1 1];
-beq = tuition+200;
+beq = tuition+500;
  
 lb = zeros(n+2,1);
 ub = [];
  
-[deterministic, det_value] = linprog(f, A, b, Aeq, beq, lb, ub);
+[deterministic, det_value] = linprog(f, A, b, Aeq, beq, lb, ub)
 
 % now we solve the stochastic problem with the first stage variables as
 % determined from our deterministic model
@@ -194,9 +198,8 @@ beq = sim_liabilities - (sim_returns+1)'*deterministic(1:n);
 lb = zeros(2*S,1);
 ub = [];
  
-[recourse, recourse_value] = linprog(f, A, b, Aeq, beq, lb, ub);
-
-vss = recourse_value + sum(deterministic(1:n)) - sto_value;
+[recourse, recourse_value] = linprog(f, A, b, Aeq, beq, lb, ub)
+vss = recourse_value + sum(deterministic(1:n)) - sto_value
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 6. tracking performance of stochastic model 
@@ -220,7 +223,7 @@ current_prices = table2array(data((test_start) <= dates & dates <= test_start,:)
 shares = stochastic(1:n) ./ current_prices;
         
 % weekly portfolio value during the out-of-sample window
-portfolio_value = period_prices * shares;
+portfolio_value = period_prices * shares
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 7. plot tracked portfolio results
