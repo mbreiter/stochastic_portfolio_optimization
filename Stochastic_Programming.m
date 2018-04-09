@@ -69,7 +69,7 @@ rho = corrcov(cov);
 L = chol(rho, 'lower');
 
 % define the number of randomized scenarios to sample for
-S = 20;
+S = 5;
 
 % our simulated asset prices and returns
 sim_price = zeros(n,S);
@@ -120,12 +120,12 @@ zlabel('Asset Price','interpreter','latex','FontSize',12);
 p = 1/S;
 
 % we have an initial budget of 15,000
-B = 12000;
+B = 15000;
 
-% the benefit of running a surplus will be a 500 and the cost of running a
-% shortfall will be -1000
-surplus = -500;
-shortfall = 1000;
+% the benefit of running a surplus will be a 2 and the cost of running a
+% shortfall will be -10
+surplus = -1;
+shortfall = 2;
 
 % formulate our objective function
 f = [ones(1,n) repmat(p*[surplus shortfall], 1, S)]';
